@@ -1,0 +1,107 @@
+import streamlit as st
+import pandas as pd
+import requests
+from sklearn.ensemble import RandomForestRegressor
+
+# --- 1. MANDATORY FIRST COMMAND ---
+st.set_page_config(page_title="India House Price AI", page_icon="🏠")
+
+# --- 2. LIVE CURRENCY CONVERTER (INR to USD) ---
+@st.cache_data(ttl=3600)
+def get_usd_rate():
+    try:
+        # Get live rate: 1 USD = X INR
+        response = requests.get("https://api.exchangerate-api.com/v4/latest/USD")
+        return response.json()['rates']['INR']
+    except Exception:
+        return 83.50  # Fallback
+
+# --- 3. LOAD & PREPROCESS DATA ---
+@st.cache_resource
+def load_and_prep_data():
+    df = pd.read_csv('house_price_dataset_india_12k.csv') 
+    
+    # We drop ID and the calculated 'Price_per_sqft' to avoid data leakage
+    # We keep City, Locality_Tier, BHK, Bathrooms, Area_sqft, and Furnishing
+    features = ['City', 'Locality_Tier', 'BHK', 'Bathrooms', 'Area_sqft', 'Furnishing']
+    X_raw = df[features]
+    y = df['Price']
+    
+    # Convert all text columns (City, Locality_Tier, Furnishing) into numbers
+    X_encoded = pd.get_dummies(X_raw)
+    
+    # Train Model
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_encoded, y)
+    
+    return model, X_encoded.columns, df
+
+model, model_columns, original_df = load_and_prep_data()
+inr_to_usd_rate = get_usd_rate()
+
+# --- 4. UI CONFIGURATION ---
+st.title("🏠 Indian House Price Predictor")
+st.markdown("AI-powered valuation based on your specific dataset and live exchange rates.")
+
+# Sidebar Inputs
+st.sidebar.header("Property Details")
+
+# City Selection
+selected_city = st.sidebar.selectbox("Select City", sorted(original_df['City'].unique()))
+
+# Locality Tier (The source of your previous 'Mid' error)
+selected_tier = st.sidebar.selectbox("Locality Tier", sorted(original_df['Locality_Tier'].unique()))
+
+# Furnishing Status
+selected_furnishing = st.sidebar.selectbox("Furnishing Status", sorted(original_df['Furnishing'].unique()))
+
+# Numeric Details
+sqft = st.sidebar.number_input("Area (sqft)", 
+                               min_value=int(original_df['Area_sqft'].min()), 
+                               max_value=int(original_df['Area_sqft'].max()), 
+                               value=1200)
+
+beds = st.sidebar.slider("BHK (Bedrooms)", 
+                         int(original_df['BHK'].min()), 
+                         int(original_df['BHK'].max()), 2)
+
+baths = st.sidebar.slider("Bathrooms", 
+                          int(original_df['Bathrooms'].min()), 
+                          int(original_df['Bathrooms'].max()), 2)
+
+display_currency = st.radio("Display Currency", ["INR (₹)", "USD ($)"])
+
+# --- 5. PREDICTION LOGIC ---
+if st.button("Predict Current Price"):
+    # Create empty row matching model columns
+    input_row = pd.DataFrame(0, index=[0], columns=model_columns)
+    
+    # Fill numerical data
+    input_row['Area_sqft'] = sqft
+    input_row['BHK'] = beds
+    input_row['Bathrooms'] = baths
+    
+    # Set Categorical columns (One-Hot Encoding)
+    if f"City_{selected_city}" in model_columns:
+        input_row[f"City_{selected_city}"] = 1
+    if f"Locality_Tier_{selected_tier}" in model_columns:
+        input_row[f"Locality_Tier_{selected_tier}"] = 1
+    if f"Furnishing_{selected_furnishing}" in model_columns:
+        input_row[f"Furnishing_{selected_furnishing}"] = 1
+
+    # Get prediction (Dataset is in INR)
+    predicted_inr = model.predict(input_row)[0]
+    
+    # Display Result
+    st.divider()
+    if display_currency == "INR (₹)":
+        st.header(f"Estimated Value: ₹{predicted_inr:,.0f}")
+    else:
+        predicted_usd = predicted_inr / inr_to_usd_rate
+        st.header(f"Estimated Value: ${predicted_usd:,.2f}")
+    
+    st.info(f"Using live conversion rate: 1 USD = ₹{inr_to_usd_rate:.2f}")
+
+    # Extra Insight
+    avg_city_price = original_df[original_df['City'] == selected_city]['Price'].mean()
+    st.write(f"The average house price in **{selected_city}** for this dataset is ₹{avg_city_price:,.0f}")

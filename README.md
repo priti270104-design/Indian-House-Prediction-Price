@@ -7,8 +7,10 @@ This project serves as a "Real-Time" valuation tool for the Indian real estate m
 **Key Features**
 
 **AI-Driven Predictions:** Uses a RandomForestRegressor to capture non-linear relationships between property features and prices.
+
 **Live Forex Integration:** Connects to an external API to fetch the current USD/INR exchange rate every hour.
 Dynamic Data Handling: Automatically processes categorical text data (like "Premium" localities or "Semi-Furnished" statuses) using One-Hot Encoding.
+
 **Interactive UI:** Sidebar controls for user-friendly adjustments of area, bedrooms, and bathrooms.
 
 **🛠️ Tech Stack**

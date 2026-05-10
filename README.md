@@ -14,8 +14,11 @@ Dynamic Data Handling: Automatically processes categorical text data (like "Prem
 **🛠️ Tech Stack**
 
 **Frontend:** Streamlit (Python-based Web Framework)
+
 **Machine Learning:** Scikit-learn (Random Forest Regressor)
+
 **Data Manipulation:** Pandas
+
 **API Integration:** Requests (for Live Currency Rates)
 
 **📋 Installation & Setup**
@@ -36,6 +39,7 @@ streamlit run your_filename.py
 The application follows a standard Data Science pipeline to ensure accurate results:
 
 **Preprocessing**: The app cleans the input data, removing unique IDs and target-leaking columns (like Price per Sqft).
+
 **Encoding**: It uses One-Hot Encoding to transform text-based categories (City, Locality, Furnishing) into a binary format the AI can understand.
 
 **Training**: A Random Forest model creates an "ensemble" of decision trees to find patterns in the 12,000 records.

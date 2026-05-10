@@ -37,6 +37,7 @@ The application follows a standard Data Science pipeline to ensure accurate resu
 
 **Preprocessing**: The app cleans the input data, removing unique IDs and target-leaking columns (like Price per Sqft).
 **Encoding**: It uses One-Hot Encoding to transform text-based categories (City, Locality, Furnishing) into a binary format the AI can understand.
+
 **Training**: A Random Forest model creates an "ensemble" of decision trees to find patterns in the 12,000 records.
 Real-Time Conversion: Once a price is predicted in the base currency (INR), the app fetches the latest exchange rate from exchangerate-api.com to provide a global valuation.
 
@@ -44,9 +45,13 @@ Real-Time Conversion: Once a price is predicted in the base currency (INR), the 
 
 The model is trained on house_price_dataset_india_12k.csv, which includes:
 **City:** Mumbai, Delhi, Bangalore, Pune, Hyderabad, etc.
+
 **Locality Tier:** Budget, Mid, Premium.
+
 **BHK:** 1 to 5 Bedrooms.
+
 **Area_sqft:** Total floor area.
+
 **Furnishing:** Unfurnished, Semi-Furnished, Fully-Furnished.
 
 **⚠️ Limitations**
